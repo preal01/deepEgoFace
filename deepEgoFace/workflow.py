@@ -114,7 +114,7 @@ class faceStream:
     def recognizeFromAll( self, timeLogger=None):
         while(not self.stream.isClosed()):
             start = time.time()
-            framenb, classes = self.recognizeFromNext()
+            framenb, classes = self.recognizeFromNext(timeLogger=timeLogger)
             if timeLogger is not None:
                 timeLogger.add( self.stream.getName(), framenb, "recognizer-full",time.time()-start)
 
@@ -124,7 +124,10 @@ class faceStream:
         framenb, frame = self.stream.nextFrame()
         if frame is None:
             return framenb, []
+        start = time.time()
         detections = self.detector.detect(frame)
+        if timeLogger is not None:
+            timeLogger.add( self.stream.getName(), framenb, "detector-only", time.time()-start)
 
         #loop through detections
         facenb=1
@@ -146,7 +149,7 @@ class faceStream:
                 classes.append(self.recognizer.recognize(face))
                 #log time
                 if timeLogger is not None:
-                    timeLogger.add( self.stream.getName(), framenb, facenb, "recognizer-full", time.time()-start)
+                    timeLogger.add( self.stream.getName(), framenb, facenb, "recognizer-only", time.time()-start)
                 # add bounding box
                 if self.display or self.save & SAVE_RECOGNIZED_FRAMEBBS:
                     recognizedInImage = cv2.rectangle(recognizedInImage, (roi[0][0],roi[0][1]), (roi[1][0],roi[1][1]), (255,0,0), 2)
