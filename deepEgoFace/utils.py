@@ -11,7 +11,7 @@ import numpy as np
 from sklearn import model_selection
 import pylab
 
-
+import matplotlib.pyplot as plt
 
 
 
@@ -136,3 +136,40 @@ def visualizeEmbeddings(embbedingsClassesPath,size=1):
     pylab.scatter(Y[:, 0], Y[:, 1], 20, y)
     pylab.savefig('embeddings-reduction-'+str(int(100*size))+'p.png')
     pylab.show()
+
+
+
+
+
+def boxPlotLogCompare(Method1logFile,Method2logFile):
+    file = open(Method1logFile,"r")
+    detectT = []
+    recog1T = []
+    all1T = []
+    for line in file:
+        if line.split(",")[-3] == 'detector-only':
+            detectT.append(1000*float(line.split(",")[-2]))
+        if line.split(",")[-3] == 'recognizer-only':
+            recog1T.append(1000*float(line.split(",")[-2]))
+        if line.split(",")[-3] == 'recognizer-full':
+            all1T.append(1000*float(line.split(",")[-2]))
+    file.close()
+
+    file = open(Method2logFile,"r")
+    recog2T = []
+    all2T = []
+    for line in file:
+        if line.split(",")[-3] == 'recognizer-only':
+            recog2T.append(1000*float(line.split(",")[-2]))
+        if line.split(",")[-3] == 'recognizer-full':
+            all2T.append(1000*float(line.split(",")[-2]))
+    file.close()
+
+    fig = plt.figure( figsize=(10, 6), dpi=80)
+    plt.boxplot([ detectT, recog1T, recog2T, all1T, all2T],0, '')
+    #plt.xticks(rotation=15)
+    plt.xticks([1, 2, 3, 4, 5], ['opencv detector', 'resnet classifier', 'openface+svm', 'resnet full process', 'openface full process'])
+    ax = fig.add_subplot(111)
+    ax.set_ylabel('time (ms)')
+    pylab.savefig('exe-time.png')
+    plt.show()
