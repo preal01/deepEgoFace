@@ -59,15 +59,13 @@ class kerasCnn(recognizer):
     def recognize( self, face):
         if self.grayscale : img = cv2.cvtColor( face, cv2.COLOR_BGR2GRAY);
         img = cv2.resize(img, (self.Ximg, self.Yimg))
-        if self.grayscale : img = np.reshape(img, (self.Ximg, self.Yimg))
-        to_predict = []
-        to_predict.append(np.reshape(img,(self.Ximg,self.Yimg,1)))
-        prediction = self.model.predict(np.array(to_predict))
-        print(prediction)
+        #img = cv2.normalize(img, 0, 1, cv2.NORM_MINMAX)
+        img = img * 1./255
+        #if self.grayscale : img = np.reshape(img, (self.Ximg, self.Yimg))
+        prediction = self.model.predict(np.array([np.reshape(img,(self.Ximg,self.Yimg,1))]))
         m = max(max(prediction))
         for c in range(0,len(prediction[0])):
             if prediction[0][c] == m:
-                print(c)
                 return [c]
 
 
@@ -103,8 +101,6 @@ class res18Based(kerasCnn):
                         color_mode = 'grayscale' if self.grayscale  else 'rgb')
 
         #train
-        #nb_sample_train = 10185
-        #nb_sample_val = 2545
         steps_train = int(nb_sample_train/batch_size)
         steps_val = int(nb_sample_val/batch_size)
         print("train model")
