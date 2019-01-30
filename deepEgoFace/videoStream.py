@@ -22,7 +22,7 @@ class cameraStream():
     """
     def __init__( self, device):
         self.name = "camera"
-        cap = cv2.VideoCapture(device)
+        self.capture = cv2.VideoCapture(device)
         self.nbframes = 1
         if self.capture.isOpened():
             self.hasNext = True;
