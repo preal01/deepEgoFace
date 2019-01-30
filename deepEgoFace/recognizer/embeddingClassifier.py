@@ -1,7 +1,10 @@
 from sys import getsizeof
 import os
 
+from deepEgoFace import *
+
 from sklearn import model_selection
+from sklearn.cluster import KMeans
 from sklearn import svm
 import pickle
 
@@ -40,12 +43,85 @@ class classifier( object):
 
 
 
-class kmeans:
+
+
+
+class kmeansBased:
     """
     not done yet
     """
-    def __init__(self, modelPath):
-        x = []
+    def __init__(self, modelPath, LabelsConversionPath):
+        self.modelPath = modelPath
+        self.justTrained = False
+        if os.path.isfile(self.modelPath):
+            self.model = pickle.load(open(self.modelPath, 'rb'))
+        self.lPath = LabelsConversionPath
+        if os.path.isfile(self.modelPath):
+            self.setLabelsConversion(LabelsConversionPath)
+
+
+    def statiticalyDeduceClass(self,k):
+        self.labelConversion = [0 for i in range(0,k)]
+        for l in range(0,k):
+            max = 0
+            for c in range(0,int(k/2)):
+                nb = 0
+                for y in range(0,len(self.trainY)):
+                    if self.trainY[y] == c and self.model.labels_[y] == l:
+                        nb = nb + 1
+                if nb > max :
+                    max = nb
+                    self.labelConversion[l] = c
+        file = open(self.lPath,"w+")
+        file.write(str(self.labelConversion[0]))
+        for l in range(1,len(self.labelConversion)):
+            file.write(","+str(self.labelConversion[l]))
+
+
+    def setLabelsConversion( self, LabelsConversionPath):
+        file = open(LabelsConversionPath,"r")
+        for line in file:
+            self.labelConversion = [int(el) for el in line.split(',')]
+
+    def evaluate(self):
+        #silouhette_score ?
+        trainL = self.model.labels_
+        nbCorrect = 0
+        nbTotal = 0
+        for l in trainL:
+            if self.labelConversion[l] == self.trainY[nbTotal]:
+                nbCorrect = nbCorrect + 1
+            nbTotal = nbTotal + 1
+        trainAcc = float(nbCorrect)/nbTotal
+
+        testL = self.model.predict(self.testX)
+        nbCorrect = 0
+        nbTotal = 0
+        for l in testL:
+            if self.labelConversion[l] == self.testY[nbTotal]:
+                nbCorrect = nbCorrect + 1
+            nbTotal = nbTotal + 1
+        testAcc = float(nbCorrect)/nbTotal
+
+        print("training accuray: "+ str(trainAcc) +"   validate accuray: "+ str(testAcc))
+
+
+
+    def train( self, embbedingsClassesPath, k):
+        file = open(embbedingsClassesPath,"r")
+        data = []
+        for line in file:
+            data.append(line)
+        file.close()
+        [self.trainX, self.trainY, self.testX, self.testY] = SetExtractor.extract(data,0.4)
+        self.model = KMeans(n_clusters=k, init='k-means++').fit(self.trainX)
+        self.statiticalyDeduceClass(k)
+        self.evaluate()
+        pickle.dump(self.model, open(self.modelPath, 'wb'))
+
+    def classify( self, embedding):
+        return self.labelConversion[self.model.predict([embedding])[0]]
+
 
 
 
